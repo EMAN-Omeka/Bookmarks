@@ -1,0 +1,39 @@
+.bookmark-item-link {
+  padding-left : 20px;
+}
+.bookmark-item-title {
+  width:50%;
+}
+.bookmarks-history {
+  width:100%;
+}
+.gris {
+  background-color: #eee;
+}
+#portrait-perso {
+  width: 150px;
+  padding: 20px 20px 0 0;
+}
+.bookmarks-nofav {
+  clear:both;
+  padding-left: 20px;
+}
+.bookmarks-title {
+  font-weight: bold;
+  clear:both;
+}
+.bookmarks-item {
+  margin-left: 20px;  
+}
+.note h3 {
+  font-weight: bolder;
+}
+.bookmarks-history {
+}
+.bookmarks-header {
+  font-weight: bold;
+  text-align: center;
+}
+#bookmarks-return {
+  float:right;
+}
