@@ -1,12 +1,12 @@
 # Bookmarks
 
-Ce module pour Omeka Classic propose diverses fonctionnalités destinées à 
+Ce module pour Omeka Classic propose diverses fonctionnalit√©s destin√©es √† 
 
-- contrôler ou accélérer la saisie d'information 
-- une page de présentation des utilisateurs
-- un système de favoris
-- le recensement de tous les contenus créés par chaque utilisateur
-- un système de notes privées
+- contr√¥ler ou acc√©l√©rer la saisie d'information 
+- une page de pr√©sentation des utilisateurs
+- un syst√®me de favoris
+- le recensement de tous les contenus cr√©√©s par chaque utilisateur
+- un syst√®me de notes priv√©es
 
-Ce module a été fait avec le soutien du projet Fiches de lecture Foucault :
+Ce module a √©t√© fait avec le soutien du projet Fiches de lecture Foucault :
 https://ffl.hypotheses.org
