@@ -1,8 +1,7 @@
 # Bookmarks
 
-Ce module pour Omeka Classic propose diverses fonctionnalités destinées à 
+Ce module pour Omeka Classic propose diverses fonctionnalités destinées à :
 
-- contrôler ou accélérer la saisie d'information grâce à un système d'autocompletion
 - une page de présentation des utilisateurs
 - un système de favoris
 - le recensement de tous les contenus créés par chaque utilisateur
