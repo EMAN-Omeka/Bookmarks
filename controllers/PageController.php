@@ -11,8 +11,9 @@
         $user = new stdClass();
         $user->id = 0; 
       }
-      $items = $db->query("SELECT e.text titre, i.id id, i.modified modif, i.added added FROM `$db->Items` i LEFT JOIN `$db->ElementTexts` e ON i.id = e.record_id WHERE e.element_id = 50 AND i.owner_id = " . $userId)->fetchAll();
-      $content = "<table class='bookmarks-history'><tr><td colspan=2><h3>Notices</h3></td></tr>";
+      $items = $db->query("SELECT e.text titre, i.id id, i.modified modif, i.added added FROM `$db->Items` i LEFT JOIN `$db->ElementTexts` e ON i.id = e.record_id WHERE e.record_type = 'Item' AND e.element_id = 50 AND i.owner_id = " . $userId)->fetchAll();
+      $nbItems = count($items);
+      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>$nbItems Notice(s)</h3></td></tr>";
       $content .= "<tr><td class='bookmarks-header'>Titre</td>";
       if (current_user()) {
         $content .= "<td class='bookmarks-header'>Création</td><td class='bookmarks-header'>Modification</td>";         
@@ -40,7 +41,8 @@
       $ColorClass = "";
       $files = $db->query("SELECT f.id id, i.id itemid, f.original_filename nom, f.modified modif, f.added added FROM `$db->Files` f 
 LEFT JOIN `$db->Items` i ON f.item_id = i.id WHERE i.owner_id = " . $userId)->fetchAll();
-      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>Fichiers</h3></td></tr>";
+      $nbFiles = count($files);
+      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>$nbFiles Fichier(s)</h3></td></tr>";
       $content .= "<tr><td class='bookmarks-header'>Titre</td>"; 
       if (current_user()) {      
         $content .= "<td class='bookmarks-header'>Création</td><td class='bookmarks-header'>Modification</td>"; 
@@ -66,8 +68,9 @@ LEFT JOIN `$db->Items` i ON f.item_id = i.id WHERE i.owner_id = " . $userId)->fe
       $content .= "</table>";
       $ColorClass = "";
       $collections = $db->query("SELECT c.id id, e.text nom, c.modified modif, c.added added FROM `$db->Collections` c 
-LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $userId)->fetchAll();
-      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>Collections</h3></td></tr>";
+LEFT JOIN `$db->ElementTexts` e ON e.record_id = c.id WHERE e.record_type = 'Collection' AND e.element_id = 50 AND c.owner_id = " . $userId)->fetchAll();
+      $nbCollections = count($collections);
+      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>$nbCollections Collection(s)</h3></td></tr>";
       $content .= "<tr><td class='bookmarks-header'>Titre</td>";
       if (current_user()) {
         $content .= "<td class='bookmarks-header'>Création</td><td class='bookmarks-header'>Modification</td>"; 
@@ -93,7 +96,8 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
       $content .= "</table>";
       $ColorClass = "";
       $expositions = $db->query("SELECT title nom, modified modif, added, id FROM `$db->Exhibits` WHERE owner_id = " . $userId)->fetchAll();
-      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>Expositions</h3></td></tr>";
+      $nbExpos = count($expositions);
+      $content .= "<table class='bookmarks-history'><tr><td colspan=2><h3>$nbExpos Exposition(s)</h3></td></tr>";
       $content .= "<tr><td class='bookmarks-header'>Titre</td>";
       if (current_user()) {
         $content .= "<td class='bookmarks-header'>Création</td><td class='bookmarks-header'>Modification</td>"; 
@@ -118,7 +122,7 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
       }
       $content .= "</table>";
       $userName = $db->query("SELECT name FROM `$db->Users` WHERE id = " . $userId)->fetchAll();
-      $content = "<span id='bookmarks-return'><a href='" . WEB_ROOT . "/mapage/" . $userId . "'>retour à la page de présentation de " . $userName[0]['name'] . "</a></span><h2>Contenus créés par " . $userName[0]['name'] . "</h2>" . $content;
+      $content = "<span id='bookmarks-return'><a href='" . WEB_ROOT . "/mapage/" . $userId . "'>Retour à la page de présentation de " . $userName[0]['name'] . "</a></span><h2>Contenus créés par " . $userName[0]['name'] . "</h2>" . $content;
       $this->view->content = $content;  
     }
     
@@ -126,18 +130,21 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
       $db = get_db();
       $content = $form = $portrait = $pdf = '';
       $user = current_user();
-      $userId = $this->getRequest()->getParam('userid');    
+      $userId = $this->getRequest()->getParam('userid');
+      $userName = $db->query("SELECT name FROM `$db->Users` WHERE id = $userId")->fetchAll();
       if ($user->id == $userId) {
         $form = $this->getFormPersonalPage($userId);
     		if ($this->_request->isPost()) {
     			$formData = $this->_request->getPost();
           if ($form->isValid($formData)) {
      				$valeurs = $form->getValues();
+//      				$text = $db->quote($valeurs['biographie']);
+     				$text = addslashes($valeurs['biographie']);
      				$bio = $db->query("SELECT 1 FROM `$db->Bios` WHERE userid = $userId")->fetchAll();   				
      				if ($bio) {
-              $bio = $db->query("UPDATE `$db->Bios` SET text = '" . $valeurs['bio'] . "' WHERE userid = $userId");
+              $bio = $db->query("UPDATE `$db->Bios` SET text = '$text' WHERE userid = $userId");
      				} else {
-              $bio = $db->query("INSERT INTO `$db->Bios` VALUES(null, '" . $valeurs['bio'] . "', $userId)");
+              $bio = $db->query("INSERT INTO `$db->Bios` VALUES(null, '$text', $userId)");
      				}
    				}
           $this->_helper->flashMessenger("Modifications sauvegardées.");   				
@@ -147,13 +154,18 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
    	   if (file_exists(BASE_DIR . $filename)) {
      	   $content .= "<img id='portrait-perso' src='" . WEB_ROOT . "/" . $filename ."' />"; 
    	   }   
+       $content .= $userName[0]['name'];
+/*
    	   $filename = '/files/pdfUser' . $userId . '.pdf';
    	   if (file_exists(BASE_DIR . $filename)) {
      	   $content .= "<img id='pdf-perso' src='" . WEB_ROOT . "/" . $filename ."' />"; 
-   	   }    	   			
+   	   }   
+*/ 	   			
        $portrait = $this->getFormUpload(); 
+       $portrait .= "Si votre photo ne vous plait plus, il suffit de 'Télécharger
+votre portrait' dans fichier sélectionné.<hr />";
        $pdf = $this->getFormUploadPdf();
-       $pdf .= "Vous pouvez mettre votre CV ou votre liste de publication. Attention pas d'espace au nom du fichier. A l'affichage, le document sera téléchargeable sous le lien 'Document de présentation'";
+       $pdf .= "Vous pouvez mettre votre CV ou votre liste de publication. Attention pas d'espace au nom du fichier. A l'affichage, le document sera téléchargeable sous le lien 'Document de présentation'.<hr />";
       }
       $this->view->content = $content . $portrait . $pdf . $form;      
     }
@@ -186,16 +198,14 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
        if (isset($portrait)) {
          $content .= $portrait;         
        }
-//        if (! current_user()) {         
+       if (current_user()) {        
          if ($user->id == $userId) {
-           $content .= "<a href='" . WEB_ROOT . "/mapage/" . $userId . "/edit'>Editer</a>";
+           $content .= "<br /><a href='" . WEB_ROOT . "/mapage/" . $userId . "/edit'>Editer</a>";
            $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir vos contenus</a>";;
          } else {
-           $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir les contenus créés par " . $userinfo[0]['name'] . "</a>";                    
+ /*          $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir les contenus créés par " . $userinfo[0]['name'] . "</a>";          */          
          }
-//         } else {
-//         }
-
+     }
       $this->view->content = $content;  
     }
     
@@ -206,6 +216,7 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
       $form->setName('PagePerso');      
       $form->setAction(WEB_ROOT . '/mapage/' . $uid . '/edit');
       $userBio = new Zend_Form_Element_Textarea('bio');
+      $userBio->setName('biographie');
       $bio = $db->query("SELECT text FROM `$db->Bios` WHERE userid = " . $uid)->fetchAll();
       if (isset($bio[0]['text'])) {
    			$userBio->setValue($bio[0]['text']);        
@@ -213,6 +224,7 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
  			$form->addElement($userBio);
       $submit = new Zend_Form_Element_Submit('submit');
       $submit->setLabel('Enregistrer');
+      $submit->setName('savepage');      
       $form->addElement($submit);    			
       return $form;
     }
@@ -229,7 +241,7 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
           $form->lefichier->addFilter('Rename', $name);           
    				$valeurs = $form->getValues();   
    				if (!$form->lefichier->receive()) {
-              print "Error receiving the file";
+              print "Erreur lors de la réception du fichier";
           }                    				
         }
       }
@@ -339,10 +351,10 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
   		if ($this->_request->isPost()) {
   			$formData = $this->_request->getPost();
   			if ($form->isValid($formData)) {
-  				$valeurs = $form->getValues();    
+  				$valeurs = $form->getValues(); 
   				if ($valeurs['noteid']) {
     				$date = date('Y-m-d H:i:s', time());
-    				$db->query("UPDATE `$db->Notes` SET text = '"  . $valeurs['lanote'] . "', title = '" . $valeurs['title'] . "' , date = '" . $date . "' WHERE id = " . $valeurs['noteid']);    				
+    				$db->query("UPDATE `$db->Notes` SET text = '"  . addslashes($valeurs['lanote']) . "', title = '" . addslashes($valeurs['title']) . "' , date = '" . $date . "' WHERE id = " . $valeurs['noteid']);    				
   				}
   				$this->_redirect('mesnotes');  				
         }
@@ -381,7 +393,7 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
   				$user = current_user();
   				$userid = $user->id;
   				$date = date('Y-m-d H:i:s');
-   				$db->query("INSERT INTO `$db->Notes` VALUES (null, '" . $valeurs['lanote'] . "', $userid, '" . $valeurs['title'] . "','" . $date . "')");			  
+   				$db->query("INSERT INTO `$db->Notes` VALUES (null, '" . addslashes($valeurs['lanote']) . "', $userid, '" . addslashes($valeurs['title']) . "','" . $date . "')");
   			}
   			$this->_redirect('mesnotes');  				
       }          
@@ -400,15 +412,19 @@ LEFT JOIN `$db->ElementTexts` e ON c.id = e.record_id WHERE c.owner_id = " . $us
       }
       $note_id = new Zend_Form_Element_Hidden('noteid');
  			$note_id->setValue($noteId);
+ 			$note_id->setName('noteid');
  			$form->addElement($note_id);
  			$title = new Zend_Form_Element_Text('title');
+ 			$title->setName('title');
  			$title->setValue($titre);
  			$form->addElement($title);          
  			$note = new Zend_Form_Element_Textarea('lanote');
- 			$note->setValue($texte);
+ 			$note->setName('lanote');
+ 			$note->setValue($texte); 			
  			$form->addElement($note);          			      			    
       $submit = new Zend_Form_Element_Submit('submit');
       $submit->setLabel('Enregistrer la note');
+      $submit->setName('savenote');      
       $form->addElement($submit);   			   
  			return $form;
     }
