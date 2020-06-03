@@ -37,6 +37,7 @@ class BookmarksPlugin extends Omeka_Plugin_AbstractPlugin
           break;
         case 'Collection' : 
           $t = 'Collection';
+          $query = "SELECT u.name nom, u.id userid FROM `$db->Users` u LEFT JOIN `$db->Collections` c ON c.owner_id = u.id WHERE c.id = " . $entity->id;
           $userName = $db->query("SELECT u.name nom, u.id userid FROM `$db->Users` u LEFT JOIN `$db->Collections` c ON c.owner_id = u.id WHERE c.id = " . $entity->id)->fetchAll();
           break;
         case 'File' :
@@ -45,7 +46,11 @@ class BookmarksPlugin extends Omeka_Plugin_AbstractPlugin
           $userName = $db->query("SELECT u.name nom, u.id userid FROM `$db->Users` u LEFT JOIN `$db->Items` i ON i.owner_id = u.id LEFT JOIN `$db->Files` f ON f.item_id = i.id WHERE f.id = " . $entity->id)->fetchAll();
           break;
       }
-      return "$t créé$e par <a href='" . WEB_ROOT . '/mapage/' . $userName[0]['userid'] ."'>" . $userName[0]['nom'] . "</a>";
+      if (isset($userName[0])) {
+        return "$t créé$e par <a href='" . WEB_ROOT . '/mapage/' . $userName[0]['userid'] ."'>" . $userName[0]['nom'] . "</a>";        
+      } else {
+        return "";
+      }
     }
     
     public function hookPublicItemsShow($args) {
@@ -281,7 +286,17 @@ class BookmarksPlugin extends Omeka_Plugin_AbstractPlugin
       						)
       				)
       		);       		
-      		       		
+       		$router->addRoute(
+      				'bookmarks_list_pages',
+      				new Zend_Controller_Router_Route(
+      						'listpages',
+      						array(
+      								'module' => 'bookmarks',
+      								'controller'   => 'page',
+      								'action'       => 'list-pages',
+      						)
+      				)
+      		);      		       		
       }
     }
     public function hookInstall() { 

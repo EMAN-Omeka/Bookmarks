@@ -150,21 +150,30 @@ LEFT JOIN `$db->ElementTexts` e ON e.record_id = c.id WHERE e.record_type = 'Col
           $this->_helper->flashMessenger("Modifications sauvegardées.");   				
    				$this->_redirect('mapage/' . $user->id);
    			}
-   	   $filename = '/files/portraitUser' . $userId . '.jpg';
-   	   if (file_exists(BASE_DIR . $filename)) {
-     	   $content .= "<img id='portrait-perso' src='" . WEB_ROOT . "/" . $filename ."' />"; 
+   	   $files = glob(BASE_DIR . "/files/portraitUser$userId.*");
+       $filename = "none";
+   	   if (isset($files[0])) {
+     	   $infos = pathinfo($files[0]);
+     	   $filename = '/files/' . $infos['basename'];
+   	   } 
+  	   if (file_exists(BASE_DIR . $filename)) {
+     	   $content .= "<img id='portrait-perso' src='" . WEB_ROOT . $filename ."' />"; 
    	   }   
        $content .= $userName[0]['name'];
-/*
-   	   $filename = '/files/pdfUser' . $userId . '.pdf';
-   	   if (file_exists(BASE_DIR . $filename)) {
-     	   $content .= "<img id='pdf-perso' src='" . WEB_ROOT . "/" . $filename ."' />"; 
-   	   }   
-*/ 	   			
        $portrait = $this->getFormUpload(); 
-       $portrait .= "Si votre photo ne vous plait plus, il suffit de 'Télécharger
+       $portrait .= "Si votre photo ne vous plaît plus, il suffit de 'Télécharger
 votre portrait' dans fichier sélectionné.<hr />";
-       $pdf = $this->getFormUploadPdf();
+       $pdf = "";
+   	   $files = glob(BASE_DIR . "/files/pdfUser$userId.*");
+       $filename = "none";
+   	   if (isset($files[0])) {
+     	   $infos = pathinfo($files[0]);
+     	   $filename = '/files/' . $infos['basename'];
+   	   }   	 
+   	   if (file_exists(BASE_DIR . $filename)) {
+     	   $pdf .= "<a href='". WEB_ROOT . $filename . "' target='_blank'><img id='pdf-perso' src='" . WEB_ROOT . "/plugins/Bookmarks/pdf-icon.png' /></a>"; 
+   	   }    	   			
+       $pdf .= $this->getFormUploadPdf();
        $pdf .= "Vous pouvez mettre votre CV ou votre liste de publication. Attention pas d'espace au nom du fichier. A l'affichage, le document sera téléchargeable sous le lien 'Document de présentation'.<hr />";
       }
       $this->view->content = $content . $portrait . $pdf . $form;      
@@ -180,12 +189,22 @@ votre portrait' dans fichier sélectionné.<hr />";
      	} else { 
      	   $userinfo = $db->query("SELECT name FROM `$db->Users` WHERE id = $userId")->fetchAll();
      	   if ($userinfo) {
-       	   $filename = '/files/portraitUser' . $userId . '.jpg';
+       	   $files = glob(BASE_DIR . "/files/portraitUser$userId.*");
+           $filename = "none";       	   
+       	   if (isset($files[0])) {
+         	   $infos = pathinfo($files[0]);
+         	   $filename = '/files/' . $infos['basename'];
+       	   }
        	   if (file_exists(BASE_DIR . $filename)) {
          	   $content .= "<img id='portrait-perso' src='" . WEB_ROOT . "/" . $filename ."' />"; 
        	   }
        	   $content .= $userinfo[0]['name'] . "<br /><br />";
-       	   $filename = '/files/pdfUser' . $userId . '.pdf';
+       	   $files = glob(BASE_DIR . "/files/pdfUser$userId.*");
+           $filename = "none";
+       	   if (isset($files[0])) {
+         	   $infos = pathinfo($files[0]);
+         	   $filename = '/files/' . $infos['basename'];
+       	   }
        	   if (file_exists(BASE_DIR . $filename)) {
          	   $content .= "<a href='" . WEB_ROOT . "/" . $filename ."' id='pdf-perso'>Document de présentation</a>"; 
        	   }       	   
@@ -203,9 +222,12 @@ votre portrait' dans fichier sélectionné.<hr />";
            $content .= "<br /><a href='" . WEB_ROOT . "/mapage/" . $userId . "/edit'>Editer</a>";
            $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir vos contenus</a>";;
          } else {
- /*          $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir les contenus créés par " . $userinfo[0]['name'] . "</a>";          */          
-         }
-     }
+           $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir les contenus créés par " . $userinfo[0]['name'] . "</a>";
+         } 
+       } else {
+         $content .= "<a href='" . WEB_ROOT . "/historique/" . $userId . "'><br />Voir les contenus créés par " . $userinfo[0]['name'] . "</a>";                   
+       }
+
       $this->view->content = $content;  
     }
     
@@ -256,10 +278,8 @@ votre portrait' dans fichier sélectionné.<hr />";
   			$formData = $this->_request->getPost();
         if ($form->isValid($formData)) {   
           $fichier = pathinfo($form->lefichier->getFileName());
+          array_map('unlink', glob(BASE_DIR . "/files/pdfUser" . $user->id . ".*"));          
           $name = BASE_DIR . '/files/pdfUser' . $user->id . '.' . $fichier['extension']; 
-          if (file_exists($name)) {
-            unlink($name);
-          }
           $form->lefichier->addFilter('Rename', $name);           
    				$valeurs = $form->getValues();   
    				if (!$form->lefichier->receive()) {
@@ -278,7 +298,7 @@ votre portrait' dans fichier sélectionné.<hr />";
       $file = new Zend_Form_Element_File('portrait'); 
       $file->setName('Portrait');
       $file->setDestination(BASE_DIR . '/files/');
-      $file->addValidator('Extension', false, 'jpg');      
+      $file->addValidator('Extension', false, 'jpg,jpeg,png');      
       $form->addElement($file, 'lefichier');
       $submit = new Zend_Form_Element_Submit('submit');
       $submit->setLabel('Télécharger le portrait');
@@ -443,8 +463,6 @@ votre portrait' dans fichier sélectionné.<hr />";
 
     public function removeFavAction() {
   		$params = Zend_Controller_Front::getInstance()->getRequest()->getParams();
-      echo $params['type'];
-      echo $params['id'];
       $user = current_user();
       $db = get_db();
       $query = "DELETE FROM `$db->Favoris` WHERE type = '" . $params['type'] . "' AND favid = " . $params['id'] . " AND userid = " . $user->id;
@@ -496,4 +514,15 @@ votre portrait' dans fichier sélectionné.<hr />";
   		}  		 		
       $this->view->content = $content . "</div>";
     }
+    public function listPagesAction() {
+      $db = get_db();
+			$pages = $db->query("SELECT u.id id, u.username username, u.name name , b.text text FROM `$db->Bios` b LEFT JOIN `$db->Users` u ON u.id = b.userid ORDER BY u.username")->fetchAll();
+// 			$content = "<table id='pages'><tr><td class='pages-title'>Utilisateur</td><td class='pages-title'>Nom Prénom</td><td class='pages-title'>Lien</td></tr>";
+      $content = "<ul>";
+			foreach ($pages as $i => $page) {
+  			$content .= "<li><a href='" . WEB_ROOT . "/mapage/" . $page['id'] . "' target='_blank'>" . $page['name'] . "</a></li>";
+			}
+      $content .= "</ul>";
+      $this->view->content = $content;
+    }    
   }
