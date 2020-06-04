@@ -198,7 +198,7 @@ votre portrait' dans fichier sélectionné.<hr />";
        	   if (file_exists(BASE_DIR . $filename)) {
          	   $content .= "<img id='portrait-perso' src='" . WEB_ROOT . "/" . $filename ."' />"; 
        	   }
-       	   $content .= $userinfo[0]['name'] . "<br /><br />";
+       	   $content .= "<h2>" . $userinfo[0]['name'] . "</h2><br /><br />";
        	   $files = glob(BASE_DIR . "/files/pdfUser$userId.*");
            $filename = "none";
        	   if (isset($files[0])) {
