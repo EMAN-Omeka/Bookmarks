@@ -285,19 +285,19 @@ class BookmarksPlugin extends Omeka_Plugin_AbstractPlugin
       								'action'       => 'uploadpdf',
       						)
       				)
-      		);       		
-       		$router->addRoute(
-      				'bookmarks_list_pages',
-      				new Zend_Controller_Router_Route(
-      						'listpages',
-      						array(
-      								'module' => 'bookmarks',
-      								'controller'   => 'page',
-      								'action'       => 'list-pages',
-      						)
-      				)
-      		);      		       		
+      		);       		     		       		
       }
+   		$router->addRoute(
+  				'bookmarks_list_pages',
+  				new Zend_Controller_Router_Route(
+  						'listpages',
+  						array(
+  								'module' => 'bookmarks',
+  								'controller'   => 'page',
+  								'action'       => 'list-pages',
+  						)
+  				)
+  		);       
     }
     public function hookInstall() { 
       $db = get_db();
